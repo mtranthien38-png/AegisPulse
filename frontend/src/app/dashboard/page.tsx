@@ -4,13 +4,6 @@ import { StatCard } from "@/components/stat-card";
 import { ContractPanel } from "@/components/contract-panel";
 import { WorkflowPanel } from "@/components/workflow-panel";
 
-const cards = [
-  { label: "Monitored assets", value: "12", hint: "Across 3 networks" },
-  { label: "Open alerts", value: "3", hint: "2 high-confidence" },
-  { label: "Active incidents", value: "2", hint: "1 requires on-call" },
-  { label: "MTTA", value: "4.8m", hint: "Mean time to acknowledge" },
-];
-
 export default async function DashboardPage() {
   const [overview, contract, workflow] = await Promise.all([
     api.overview().catch(() => null),
@@ -19,13 +12,20 @@ export default async function DashboardPage() {
   ]);
 
   const summary = overview?.summary ?? {
-    monitored_assets: 12,
-    healthy_assets: 9,
-    degraded_assets: 2,
-    open_alerts: 4,
-    open_incidents: 2,
-    resolved_incidents: 17,
+    monitored_assets: 0,
+    healthy_assets: 0,
+    degraded_assets: 0,
+    open_alerts: 0,
+    open_incidents: 0,
+    resolved_incidents: 0,
   };
+
+  const cards = [
+    { label: "Monitored assets", value: String(summary.monitored_assets), hint: `${summary.healthy_assets} healthy` },
+    { label: "Open alerts", value: String(summary.open_alerts), hint: `${summary.open_incidents} open incidents` },
+    { label: "Open incidents", value: String(summary.open_incidents), hint: `${summary.resolved_incidents} resolved` },
+    { label: "Resolved incidents", value: String(summary.resolved_incidents), hint: "Contract workflow metrics" },
+  ];
 
   const workflowSteps = workflow?.steps ?? [
     { key: "asset_onboard", label: "Onboard asset", status: "done" },
@@ -53,19 +53,14 @@ export default async function DashboardPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {contract ? (
-            <ContractPanel
-              address={contract.address}
-              txHash={contract.deployment_tx_hash}
-              network={contract.network}
-            />
-          ) : (
-            <ContractPanel
-              address="0x4FF47a2cF80f48f848679c6B73C4b560912EbeC5"
-              txHash="0x69980c8f109895e2380b090d0fc1358964595635e7cecdbe2c3be6f7fa43cd29"
-              network="studionet"
-            />
-          )}
+          <ContractPanel
+            address={contract?.address ?? "0x4FF47a2cF80f48f848679c6B73C4b560912EbeC5"}
+            txHash={contract?.deployment_tx_hash ?? "0x69980c8f109895e2380b090d0fc1358964595635e7cecdbe2c3be6f7fa43cd29"}
+            network={contract?.network ?? "studionet"}
+            registeredAssets={contract?.runtime?.registered_assets}
+            trackedAlerts={contract?.runtime?.tracked_alerts}
+            openIncidents={contract?.runtime?.open_incidents}
+          />
 
           <Section eyebrow="Status" title="Operational summary">
             <div className="grid grid-cols-2 gap-3 text-sm">

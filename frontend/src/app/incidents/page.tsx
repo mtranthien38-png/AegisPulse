@@ -1,16 +1,15 @@
-const incidents = [
-  { title: "Validator drift detected", status: "triaged", owner: "oncall", asset: "Validator Node A" },
-  { title: "RPC gateway instability", status: "investigating", owner: "platform", asset: "RPC Gateway" },
-];
+import { api } from "@/lib/api";
 
-export default function IncidentsPage() {
+export default async function IncidentsPage() {
+  const incidents = await api.incidents().catch(() => []);
+
   return (
     <main className="min-h-screen bg-slate-950 p-6 text-white">
       <div className="mx-auto max-w-5xl">
         <h1 className="text-3xl font-semibold">Incidents</h1>
         <div className="mt-6 grid gap-4">
           {incidents.map((incident) => (
-            <div key={incident.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div key={incident.id} className="rounded-2xl border border-white/10 bg-white/5 p-5">
               <p className="text-lg font-medium">{incident.title}</p>
               <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-400">
                 <span>Status: {incident.status}</span>
@@ -23,6 +22,11 @@ export default function IncidentsPage() {
               </div>
             </div>
           ))}
+          {incidents.length === 0 && (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center text-slate-400">
+              No incidents have been opened yet.
+            </div>
+          )}
         </div>
       </div>
     </main>

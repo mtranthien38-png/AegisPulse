@@ -1,36 +1,31 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+from app.services import store
 
 router = APIRouter()
 
 
+class AssetCreateRequest(BaseModel):
+    id: str
+    name: str
+    asset_type: str
+    network: str = "studionet"
+
+
 @router.get("/")
 async def list_assets() -> list[dict]:
-    return [
-        {
-            "id": "asset_1",
-            "name": "Validator Node A",
-            "asset_type": "validator",
-            "network": "eigenlayer",
-            "status": "healthy",
-            "uptime_30d": 99.92,
-            "risk_score": 11,
-        },
-        {
-            "id": "asset_2",
-            "name": "RPC Gateway",
-            "asset_type": "service",
-            "network": "cosmos",
-            "status": "degraded",
-            "uptime_30d": 97.48,
-            "risk_score": 41,
-        },
-        {
-            "id": "asset_3",
-            "name": "Bridge Watcher",
-            "asset_type": "monitor",
-            "network": "symbiotic",
-            "status": "healthy",
-            "uptime_30d": 99.68,
-            "risk_score": 18,
-        },
-    ]
+    return store.list_assets()
+
+
+@router.post("/")
+async def create_asset(request: AssetCreateRequest) -> dict:
+    try:
+        return store.add_asset(
+            asset_id=request.id,
+            name=request.name,
+            asset_type=request.asset_type,
+            network=request.network,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))

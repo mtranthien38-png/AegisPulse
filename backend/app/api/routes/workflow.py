@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.core.config import settings
+from app.services import workflow_steps
 
 router = APIRouter()
 
@@ -8,13 +9,7 @@ router = APIRouter()
 @router.get("/")
 async def workflow() -> dict:
     return {
-        "steps": [
-            {"key": "asset_onboard", "label": "Onboard asset", "status": "done"},
-            {"key": "alert_ingest", "label": "Ingest alert", "status": "done"},
-            {"key": "contract_score", "label": "Score on-chain", "status": "done"},
-            {"key": "incident_open", "label": "Open incident", "status": "active"},
-            {"key": "review_close", "label": "Review and close", "status": "pending"},
-        ],
+        "steps": workflow_steps(),
         "contract": {
             "address": settings.CONTRACT_ADDRESS,
             "network": "studionet",
