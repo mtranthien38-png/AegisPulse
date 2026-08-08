@@ -17,6 +17,10 @@ export default function IncidentsPage() {
                 <span>Owner: {incident.owner}</span>
                 <span>Asset: {incident.asset}</span>
               </div>
+              <div className="mt-4 flex gap-3">
+                <button className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-medium text-slate-950">Open contract read</button>
+                <button className="rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/90">Mark reviewed</button>
+              </div>
             </div>
           ))}
         </div>

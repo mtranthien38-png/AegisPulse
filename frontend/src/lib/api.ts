@@ -15,4 +15,5 @@ export const api = {
   alerts: () => request("/alerts"),
   incidents: () => request("/incidents"),
   contract: () => request("/contract"),
+  workflow: () => request("/workflow"),
 };

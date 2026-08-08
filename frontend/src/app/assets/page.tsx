@@ -19,6 +19,18 @@ export default function AssetsPage() {
             </div>
           ))}
         </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {assets.map((asset) => (
+            <div key={`${asset.name}-action`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="font-medium">{asset.name}</p>
+              <p className="mt-2 text-sm text-slate-400">Risk {asset.risk} on contract-backed workflow</p>
+              <div className="mt-4 flex gap-2">
+                <button className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-medium text-slate-950">Score alert</button>
+                <button className="rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/90">Open asset</button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </main>
   );

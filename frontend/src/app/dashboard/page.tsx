@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import { Section } from "@/components/section";
 import { StatCard } from "@/components/stat-card";
 import { ContractPanel } from "@/components/contract-panel";
+import { WorkflowPanel } from "@/components/workflow-panel";
 
 const cards = [
   { label: "Monitored assets", value: "12", hint: "Across 3 networks" },
@@ -11,9 +12,10 @@ const cards = [
 ];
 
 export default async function DashboardPage() {
-  const [overview, contract] = await Promise.all([
+  const [overview, contract, workflow] = await Promise.all([
     api.overview().catch(() => null),
     api.contract().catch(() => null),
+    api.workflow().catch(() => null),
   ]);
 
   const summary = overview?.summary ?? {
@@ -24,6 +26,14 @@ export default async function DashboardPage() {
     open_incidents: 2,
     resolved_incidents: 17,
   };
+
+  const workflowSteps = workflow?.steps ?? [
+    { key: "asset_onboard", label: "Onboard asset", status: "done" },
+    { key: "alert_ingest", label: "Ingest alert", status: "done" },
+    { key: "contract_score", label: "Score on-chain", status: "done" },
+    { key: "incident_open", label: "Open incident", status: "active" },
+    { key: "review_close", label: "Review and close", status: "pending" },
+  ];
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(77,212,255,0.12),_transparent_25%),linear-gradient(180deg,#09101f,#070b14)] p-6 text-white">
@@ -78,6 +88,10 @@ export default async function DashboardPage() {
             </div>
           </Section>
 
+          <WorkflowPanel steps={workflowSteps} />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
           <Section eyebrow="Alerts" title="Recent signal stream">
             <div className="space-y-3">
               {[
@@ -115,6 +129,15 @@ export default async function DashboardPage() {
             </div>
           </Section>
         </div>
+
+        <Section eyebrow="Contract" title="Write/read flow">
+          <div className="space-y-3 text-sm text-slate-300">
+            <p>1. Register a monitored asset with the contract.</p>
+            <p>2. Score a fresh alert on-chain.</p>
+            <p>3. Open an incident after the contract verdict.</p>
+            <p>4. Read back the alert or incident state from the contract panel.</p>
+          </div>
+        </Section>
       </div>
     </main>
   );

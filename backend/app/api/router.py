@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import assets, alerts, incidents, metrics, overview, contract
+from app.api.routes import assets, alerts, incidents, metrics, overview, contract, workflow
 
 api_router = APIRouter()
 api_router.include_router(assets.router, prefix="/assets", tags=["assets"])
@@ -9,3 +9,4 @@ api_router.include_router(incidents.router, prefix="/incidents", tags=["incident
 api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 api_router.include_router(overview.router, prefix="/overview", tags=["overview"])
 api_router.include_router(contract.router, prefix="/contract", tags=["contract"])
+api_router.include_router(workflow.router, prefix="/workflow", tags=["workflow"])

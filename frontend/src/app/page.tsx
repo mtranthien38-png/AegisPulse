@@ -34,6 +34,11 @@ export default function HomePage() {
             <p className="mt-2 text-slate-300">Use GenLayer-backed scoring to keep high-risk events transparent and auditable.</p>
           </div>
         </div>
+        <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-300">
+          <a className="underline decoration-cyan-300/60 underline-offset-4" href="/assets">Assets</a>
+          <a className="underline decoration-cyan-300/60 underline-offset-4" href="/alerts">Alerts</a>
+          <a className="underline decoration-cyan-300/60 underline-offset-4" href="/incidents">Incidents</a>
+        </div>
       </section>
     </main>
   );
