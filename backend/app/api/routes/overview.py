@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -13,6 +14,11 @@ async def overview() -> dict:
             "open_alerts": 4,
             "open_incidents": 2,
             "resolved_incidents": 17,
+        },
+        "contract": {
+            "address": settings.CONTRACT_ADDRESS,
+            "tx_hash": settings.CONTRACT_TX_HASH,
+            "network": "studionet",
         },
         "risk_trend": [
             {"label": "Mon", "value": 18},

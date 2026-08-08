@@ -38,3 +38,9 @@ AegisPulse is a GenLayer-ready security operations project for monitoring valida
 - Backend: `cd backend && uvicorn app.main:app --reload --port 8000`
 - Frontend: `cd frontend && npm install && npm run dev`
 - Contract: upload `intelligent-contracts/aegis_pulse.py` to GenLayer Studio
+
+## Deployed on-chain
+
+- Network: `Studionet`
+- Contract address: `0x4FF47a2cF80f48f848679c6B73C4b560912EbeC5`
+- Deployment tx: `0x69980c8f109895e2380b090d0fc1358964595635e7cecdbe2c3be6f7fa43cd29`

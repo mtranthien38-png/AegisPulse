@@ -14,4 +14,5 @@ export const api = {
   assets: () => request("/assets"),
   alerts: () => request("/alerts"),
   incidents: () => request("/incidents"),
+  contract: () => request("/contract"),
 };
