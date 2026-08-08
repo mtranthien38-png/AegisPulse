@@ -41,6 +41,6 @@ AegisPulse is a GenLayer-ready security operations project for monitoring valida
 
 ## Deployed on-chain
 
-- Network: `Studionet`
-- Contract address: `0x4FF47a2cF80f48f848679c6B73C4b560912EbeC5`
-- Deployment tx: `0x69980c8f109895e2380b090d0fc1358964595635e7cecdbe2c3be6f7fa43cd29`
+- Network: `Bradbury Testnet`
+- Contract address: `0xc32725AAA0062754C9fA7B297821CF47bB2C37F9`
+- Deployment tx: `0x995fe577b527bc7d6f23573d7eed6b7eda1b47ca79fd2758466e8a9d6dec237d`

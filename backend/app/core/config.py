@@ -6,8 +6,8 @@ class Settings(BaseModel):
     APP_VERSION: str = "0.1.0"
     CORS_ORIGINS: str = "http://localhost:3000"
     DEFAULT_ORG_NAME: str = "AegisPulse Labs"
-    CONTRACT_ADDRESS: str = "0x4FF47a2cF80f48f848679c6B73C4b560912EbeC5"
-    CONTRACT_TX_HASH: str = "0x69980c8f109895e2380b090d0fc1358964595635e7cecdbe2c3be6f7fa43cd29"
+    CONTRACT_ADDRESS: str = "0xc32725AAA0062754C9fA7B297821CF47bB2C37F9"
+    CONTRACT_TX_HASH: str = "0x995fe577b527bc7d6f23573d7eed6b7eda1b47ca79fd2758466e8a9d6dec237d"
     FRONTEND_URL: str = "http://localhost:3000"
 
     @property
