@@ -20,8 +20,21 @@ export default function HomePage() {
             Explore features
           </a>
         </div>
+        <div id="features" className="mt-20 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-sm text-cyan-200">Monitor</p>
+            <p className="mt-2 text-slate-300">Track validators, services, relays, and watchpoints with structured health signals.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-sm text-cyan-200">Triage</p>
+            <p className="mt-2 text-slate-300">Turn alerts into incidents with consistent severity, owner, and next step metadata.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-sm text-cyan-200">Respond</p>
+            <p className="mt-2 text-slate-300">Use GenLayer-backed scoring to keep high-risk events transparent and auditable.</p>
+          </div>
+        </div>
       </section>
     </main>
   );
 }
-

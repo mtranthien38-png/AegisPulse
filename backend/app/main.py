@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -38,3 +40,16 @@ async def health() -> dict:
         "environment": settings.APP_ENV,
     }
 
+
+@app.get("/")
+async def root() -> dict:
+    return {
+        "name": "AegisPulse API",
+        "status": "ready",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_, exc: HTTPException):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})

@@ -6,4 +6,6 @@ Next.js dashboard for AegisPulse.
 
 - landing page
 - dashboard overview
-
+- assets
+- alerts
+- incidents

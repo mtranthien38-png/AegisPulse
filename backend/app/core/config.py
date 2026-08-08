@@ -5,6 +5,9 @@ class Settings(BaseModel):
     APP_ENV: str = "development"
     APP_VERSION: str = "0.1.0"
     CORS_ORIGINS: str = "http://localhost:3000"
+    DEFAULT_ORG_NAME: str = "AegisPulse Labs"
+    CONTRACT_ADDRESS: str = ""
+    FRONTEND_URL: str = "http://localhost:3000"
 
     @property
     def cors_origins(self) -> list[str]:
@@ -12,4 +15,3 @@ class Settings(BaseModel):
 
 
 settings = Settings()
-
