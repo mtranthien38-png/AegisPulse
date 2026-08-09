@@ -1,62 +1,60 @@
 # AegisPulse
 
-**Detect anomalies before they become incidents — powered by GenLayer.**
+**Infrastructure SLA compliance escrow on GenLayer.**
 
-AegisPulse is an infrastructure monitoring dApp built on [GenLayer](https://genlayer.com). It registers monitored assets, scores alerts with on-chain AI consensus, and manages incident response — all as GenLayer Intelligent Contract transactions.
+AegisPulse lets infrastructure providers stake GEN on SLA commitments. When a monitoring alert triggers, the provider submits evidence URLs. Independent AI validators fetch the evidence live and adjudicate whether the SLA was violated — with dispute resolution and appeal windows.
 
 ## How it works
 
-1. **Register asset** — onboard a monitored infrastructure component (validator, relay, gateway, watchpoint) as an on-chain entry.
-2. **Score alert** — describe the anomaly evidence in plain English. The Intelligent Contract uses multi-validator AI consensus (`gl.eq_principle.prompt_comparative`) to score severity (0–100), confidence, and recommended action (`observe`, `escalate`, `isolate`, `page_oncall`).
-3. **Open incident** — escalate a high-risk alert into a tracked on-chain incident.
-4. **Resolve** — close the incident after remediation.
-
-Every step is a GenLayer transaction — fully auditable on the blockchain.
+1. **Create ticket** — provider stakes GEN, sets SLA spec, deadline, and operator (monitoring party)
+2. **Raise alert** — operator detects SLA breach and raises an on-chain alert
+3. **Submit evidence** — provider submits URLs proving SLA compliance
+4. **AI adjudication** — validators fetch evidence live via `gl.nondet.web.render()` and compare against SLA spec
+5. **Settlement** — violation → payout to operator / no violation → refund to provider
+6. **Dispute** — either party can dispute within a 3-day appeal window with additional evidence
 
 ## Architecture
 
 ```
-Browser ──genlayer-js──▸ GenLayer StudioNet
-  │                         │
-  ├─ register_asset ────────▸ AegisPulseContract
-  ├─ score_alert ───────────▸ (AI consensus)
-  ├─ open_incident ─────────▸ incident store
-  └─ resolve_incident ──────▸ status update
+Provider stakes GEN ──▸ AegisPulseContract (Bradbury)
+Operator raises alert ──▸ ...
+Provider submits URLs ──▸ ...
+AI validators fetch URLs live ──▸ adjudicate SLA compliance
+Verdict ──▸ payout or refund (emit_transfer)
+Dispute window ──▸ re-adjudicate with new evidence
 ```
 
-No backend server. The React SPA talks directly to the GenLayer chain via `genlayer-js`.
-
-## Intelligent Contract
-
-**File:** `intelligent-contracts/aegis_pulse.py`
+## Contract
 
 | Function | Type | Description |
 |----------|------|-------------|
-| `register_asset(asset_id, name, asset_type)` | write | Register a monitored asset |
-| `score_alert(alert_id, asset_id, severity_hint, evidence_summary)` | write | AI-consensus alert scoring |
-| `open_incident(incident_id, alert_id, title)` | write | Open an incident from a scored alert |
-| `resolve_incident(incident_id)` | write | Resolve an open incident |
-| `get_asset(asset_id)` | view | Read asset state |
-| `get_alert(alert_id)` | view | Read alert state |
-| `get_incident(incident_id)` | view | Read incident state |
+| `create_ticket(operator, sla_spec, deadline)` | write.payable | Provider stakes GEN |
+| `raise_alert(ticket_id, alert_summary)` | write | Operator reports SLA breach |
+| `acknowledge(ticket_id)` | write | Provider acknowledges alert |
+| `submit_evidence(ticket_id, evidence_urls, notes)` | write | Provider submits evidence URLs |
+| `adjudicate(ticket_id)` | write | AI fetches evidence, adjudicates |
+| `raise_dispute(ticket_id, additional_evidence, reason)` | write | Either party disputes |
+| `settle_refund(ticket_id)` | write | Final refund after appeal window |
+| `refund_expired(ticket_id)` | write | Auto-refund past deadline |
+| `get_ticket(ticket_id)` | view | Read ticket state |
+| `list_tickets_for(party)` | view | List tickets for address |
+| `list_all_ids()` | view | List all ticket IDs |
 
 ## Tech stack
 
-- **Contract:** Python (genlayer SDK), deployed on StudioNet
+- **Contract:** Python (genlayer SDK) with `gl.nondet.web.render()` evidence fetching
 - **Frontend:** React 19 + Vite + Tailwind CSS v4 + TypeScript
-- **Wallet:** MetaMask / OKX via `window.ethereum` (EIP-1193)
-- **Chain interaction:** `genlayer-js` (read via `readContract`, write via `writeContract`)
+- **Wallet:** MetaMask / OKX via `window.ethereum`
+- **Chain:** GenLayer Bradbury Testnet (chain ID 4221)
 
 ## Getting started
 
 ```bash
 cd frontend
-cp .env.example .env.local   # set VITE_CONTRACT_ADDRESS
+cp .env.example .env.local
 npm install
 npm run dev
 ```
-
-Open http://localhost:5173 and connect your wallet (Bradbury Testnet, chain ID 4221).
 
 ## Live
 

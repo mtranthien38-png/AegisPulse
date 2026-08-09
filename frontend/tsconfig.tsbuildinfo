@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/lib/aegispulse.ts","./src/lib/genlayer.ts","./src/lib/types.ts","./src/lib/usewallet.ts","./src/pages/alerts.tsx","./src/pages/assets.tsx","./src/pages/dashboard.tsx","./src/pages/incidents.tsx","./src/pages/landing.tsx","./vite-env.d.ts"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/lib/aegispulse.ts","./src/lib/genlayer.ts","./src/lib/types.ts","./src/lib/usewallet.ts","./src/pages/createticket.tsx","./src/pages/ticketdetail.tsx","./src/pages/tickets.tsx","./vite-env.d.ts"],"version":"5.9.3"}

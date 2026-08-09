@@ -1,75 +1,56 @@
 import { getReadClient, createWriteClient, CONTRACT_ADDRESS } from './genlayer'
-import type { ContractAsset, ContractAlert, ContractIncident } from './types'
+import { parseEther } from 'viem'
+import type { Ticket } from './types'
 
 async function read(fn: string, args: any[] = []): Promise<any> {
   const client = getReadClient()
-  return client.readContract({
-    address: CONTRACT_ADDRESS as any,
-    functionName: fn,
-    args,
-  })
+  return client.readContract({ address: CONTRACT_ADDRESS as any, functionName: fn, args })
 }
 
-async function write(account: string, fn: string, args: any[]): Promise<string> {
+async function write(account: string, fn: string, args: any[], value?: bigint): Promise<string> {
   const client = createWriteClient(account)
   return client.writeContract({
-    address: CONTRACT_ADDRESS as any,
-    functionName: fn,
-    args,
-    value: 0n,
+    address: CONTRACT_ADDRESS as any, functionName: fn, args,
+    value: value ?? 0n,
   }) as unknown as string
 }
 
-// ---- READS ----
-
-export async function getAsset(assetId: string): Promise<ContractAsset> {
-  const raw = await read('get_asset', [assetId])
-  return typeof raw === 'string' ? JSON.parse(raw) : raw
+// ---- reads ----
+export async function getTicket(id: number): Promise<Ticket> {
+  const raw = await read('get_ticket', [id])
+  return raw as unknown as Ticket
+}
+export async function listAllIds(): Promise<number[]> {
+  const raw = await read('list_all_ids', [])
+  return (raw as unknown as number[]) ?? []
+}
+export async function listTicketsFor(party: string): Promise<number[]> {
+  const raw = await read('list_tickets_for', [party])
+  return (raw as unknown as number[]) ?? []
 }
 
-export async function getAlert(alertId: string): Promise<ContractAlert> {
-  const raw = await read('get_alert', [alertId])
-  return typeof raw === 'string' ? JSON.parse(raw) : raw
+// ---- writes ----
+export async function createTicket(account: string, operator: string, slaSpec: string, deadline: number, genAmount: string) {
+  return write(account, 'create_ticket', [operator, slaSpec, deadline], parseEther(genAmount))
 }
-
-export async function getIncident(incidentId: string): Promise<ContractIncident> {
-  const raw = await read('get_incident', [incidentId])
-  return typeof raw === 'string' ? JSON.parse(raw) : raw
+export async function raiseAlert(account: string, ticketId: number, alertSummary: string) {
+  return write(account, 'raise_alert', [ticketId, alertSummary])
 }
-
-// ---- WRITES ----
-
-export async function registerAsset(
-  account: string,
-  assetId: string,
-  name: string,
-  assetType: string,
-): Promise<string> {
-  return write(account, 'register_asset', [assetId, name, assetType])
+export async function acknowledge(account: string, ticketId: number) {
+  return write(account, 'acknowledge', [ticketId])
 }
-
-export async function scoreAlert(
-  account: string,
-  alertId: string,
-  assetId: string,
-  severityHint: string,
-  evidenceSummary: string,
-): Promise<string> {
-  return write(account, 'score_alert', [alertId, assetId, severityHint, evidenceSummary])
+export async function submitEvidence(account: string, ticketId: number, evidenceUrls: string[], notes: string) {
+  return write(account, 'submit_evidence', [ticketId, evidenceUrls, notes])
 }
-
-export async function openIncident(
-  account: string,
-  incidentId: string,
-  alertId: string,
-  title: string,
-): Promise<string> {
-  return write(account, 'open_incident', [incidentId, alertId, title])
+export async function adjudicate(account: string, ticketId: number) {
+  return write(account, 'adjudicate', [ticketId])
 }
-
-export async function resolveIncident(
-  account: string,
-  incidentId: string,
-): Promise<string> {
-  return write(account, 'resolve_incident', [incidentId])
+export async function raiseDispute(account: string, ticketId: number, additionalEvidence: string[], reason: string) {
+  return write(account, 'raise_dispute', [ticketId, additionalEvidence, reason])
+}
+export async function settleRefund(account: string, ticketId: number) {
+  return write(account, 'settle_refund', [ticketId])
+}
+export async function refundExpired(account: string, ticketId: number) {
+  return write(account, 'refund_expired', [ticketId])
 }
