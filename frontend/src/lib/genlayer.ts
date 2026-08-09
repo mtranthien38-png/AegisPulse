@@ -5,9 +5,10 @@ export const CHAIN_ID = '0x107D'
 export const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || '0x1147af8C180f9F2B359E153A467a9E0EFAE07628'
 export const EXPLORER_URL = 'https://explorer-bradbury.genlayer.com'
 export const NETWORK_NAME = 'Bradbury Testnet'
+export const RPC_URL = 'https://rpc-bradbury.genlayer.com'
 
 export function getReadClient() {
-  return createClient({ chain: testnetBradbury })
+  return createClient({ chain: testnetBradbury, endpoint: RPC_URL })
 }
 
 export function createWriteClient(account: string) {
@@ -17,6 +18,7 @@ export function createWriteClient(account: string) {
     chain: testnetBradbury,
     account: account as any,
     provider,
+    endpoint: RPC_URL,
   })
 }
 
@@ -33,7 +35,7 @@ export async function switchToNetwork() {
           chainId: CHAIN_ID,
           chainName: 'GenLayer Bradbury Testnet',
           nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
-          rpcUrls: ['https://rpc-bradbury.genlayer.com'],
+          rpcUrls: [RPC_URL],
           blockExplorerUrls: [EXPLORER_URL],
         }],
       })
