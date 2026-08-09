@@ -66,6 +66,6 @@ https://aegispulse.vercel.app/
 |-------|-------|
 | Network | GenLayer Bradbury Testnet |
 | Chain ID | 4221 (0x107D) |
-| Contract | 0x1D6dd7cDCaA02c1Ac791d9091d7651bE21A03A72 |
+| Contract | 0x1147af8C180f9F2B359E153A467a9E0EFAE07628 |
 | RPC | https://rpc-bradbury.genlayer.com |
 | Explorer | https://explorer-bradbury.genlayer.com |
