@@ -3,7 +3,7 @@ import { studionet } from 'genlayer-js/chains'
 
 export const STUDIONET_CHAIN_ID = '0xF22F'
 export const STUDIONET_CHAIN_ID_DEC = 61999
-export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS as string
+export const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || '0xc32725AAA0062754C9fA7B297821CF47bB2C37F9'
 export const EXPLORER_URL = 'https://explorer-studio.genlayer.com'
 
 export function getReadClient() {
