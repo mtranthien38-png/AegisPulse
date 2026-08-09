@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useWallet } from '../lib/useWallet'
 import { getAlert, registerAsset, scoreAlert, openIncident } from '../lib/aegispulse'
-import { CONTRACT_ADDRESS, EXPLORER_URL } from '../lib/genlayer'
+import { CONTRACT_ADDRESS, EXPLORER_URL, NETWORK_NAME } from '../lib/genlayer'
 import type { LocalAsset, LocalAlert, LocalIncident } from '../lib/types'
 
 const LS_ASSETS = 'aegispulse:assets'
@@ -27,7 +27,7 @@ export function Dashboard() {
   // Register form
   const [regName, setRegName] = useState('')
   const [regType, setRegType] = useState('validator')
-  const [regNetwork, setRegNetwork] = useState('studionet')
+  const [regNetwork, setRegNetwork] = useState('bradbury')
 
   // Score form
   const [scoreAsset, setScoreAsset] = useState('')
@@ -171,7 +171,7 @@ export function Dashboard() {
             {CONTRACT_ADDRESS?.slice(0, 10)}...{CONTRACT_ADDRESS?.slice(-8)}
           </a>
           <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-300">
-            StudioNet
+            {NETWORK_NAME}
           </span>
         </div>
       </div>

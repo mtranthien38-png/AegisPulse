@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { switchToStudionet, STUDIONET_CHAIN_ID_DEC } from './genlayer'
+import { switchToNetwork, CHAIN_ID_DEC } from './genlayer'
 
 export function useWallet() {
   const [address, setAddress] = useState<string | null>(null)
@@ -15,7 +15,7 @@ export function useWallet() {
     try {
       setError(null)
       setStatus('connecting')
-      await switchToStudionet()
+      await switchToNetwork()
       const accounts = await eth.request({ method: 'eth_requestAccounts' })
       setAddress(accounts[0] ?? null)
       setStatus('connected')
@@ -33,7 +33,7 @@ export function useWallet() {
       if (accounts.length > 0) {
         setAddress(accounts[0])
         setStatus('connected')
-        switchToStudionet().catch(() => {})
+        switchToNetwork().catch(() => {})
       }
     })
 

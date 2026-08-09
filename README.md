@@ -56,7 +56,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 and connect your wallet (StudioNet, chain ID 61999).
+Open http://localhost:5173 and connect your wallet (Bradbury Testnet, chain ID 4221).
 
 ## Live
 
@@ -66,7 +66,8 @@ https://aegispulse.vercel.app/
 
 | Field | Value |
 |-------|-------|
-| Network | GenLayer StudioNet |
-| Chain ID | 61999 (0xF22F) |
-| RPC | https://studio.genlayer.com/api |
-| Explorer | https://explorer-studio.genlayer.com |
+| Network | GenLayer Bradbury Testnet |
+| Chain ID | 4221 (0x107D) |
+| Contract | 0x1D6dd7cDCaA02c1Ac791d9091d7651bE21A03A72 |
+| RPC | https://rpc-bradbury.genlayer.com |
+| Explorer | https://explorer-bradbury.genlayer.com |

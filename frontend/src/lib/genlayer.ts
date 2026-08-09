@@ -1,42 +1,43 @@
 import { createClient } from 'genlayer-js'
-import { studionet } from 'genlayer-js/chains'
+import { testnetBradbury } from 'genlayer-js/chains'
 
-export const STUDIONET_CHAIN_ID = '0xF22F'
-export const STUDIONET_CHAIN_ID_DEC = 61999
-export const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || '0xc32725AAA0062754C9fA7B297821CF47bB2C37F9'
-export const EXPLORER_URL = 'https://explorer-studio.genlayer.com'
+export const CHAIN_ID = '0x107D'  // 4221 in hex
+export const CHAIN_ID_DEC = 4221
+export const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || '0x1D6dd7cDCaA02c1Ac791d9091d7651bE21A03A72'
+export const EXPLORER_URL = 'https://explorer-bradbury.genlayer.com'
+export const NETWORK_NAME = 'Bradbury Testnet'
 
 export function getReadClient() {
-  return createClient({ chain: studionet })
+  return createClient({ chain: testnetBradbury })
 }
 
 export function createWriteClient(account: string) {
   const provider = (window as any).ethereum
   if (!provider) throw new Error('No wallet found')
   return createClient({
-    chain: studionet,
+    chain: testnetBradbury,
     account: account as any,
     provider,
   })
 }
 
-export async function switchToStudionet() {
+export async function switchToNetwork() {
   const eth = (window as any).ethereum
   if (!eth) throw new Error('No wallet found')
   try {
     await eth.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: STUDIONET_CHAIN_ID }],
+      params: [{ chainId: CHAIN_ID }],
     })
   } catch (err: any) {
     if (err.code === 4902) {
       await eth.request({
         method: 'wallet_addEthereumChain',
         params: [{
-          chainId: STUDIONET_CHAIN_ID,
-          chainName: 'GenLayer StudioNet',
+          chainId: CHAIN_ID,
+          chainName: 'GenLayer Bradbury Testnet',
           nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
-          rpcUrls: ['https://studio.genlayer.com/api'],
+          rpcUrls: ['https://rpc-bradbury.genlayer.com'],
           blockExplorerUrls: [EXPLORER_URL],
         }],
       })

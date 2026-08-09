@@ -26,7 +26,7 @@ export function Assets() {
       const txHash = await registerAsset(wallet.address, assetId, name, assetType)
       const newAsset: LocalAsset = {
         asset_id: assetId, name, asset_type: assetType,
-        status: 'healthy', network: 'studionet', registered_at: new Date().toISOString(),
+        status: 'healthy', network: 'bradbury', registered_at: new Date().toISOString(),
       }
       const updated = [...assets, newAsset]
       setAssets(updated)
