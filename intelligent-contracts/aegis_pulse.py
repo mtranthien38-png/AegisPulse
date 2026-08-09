@@ -63,6 +63,23 @@ Evidence: {evidence_summary[:1500]}
         self.incidents[incident_id] = json.dumps(payload)
         return json.dumps(payload)
 
+    @gl.public.write
+    def resolve_incident(self, incident_id: str) -> str:
+        raw = self.incidents[incident_id]
+        data = json.loads(raw)
+        assert data["status"] == "open", "Incident not open"
+        data["status"] = "resolved"
+        self.incidents[incident_id] = json.dumps(data)
+        return json.dumps(data)
+
+    @gl.public.view
+    def get_asset(self, asset_id: str) -> str:
+        return self.assets[asset_id]
+
     @gl.public.view
     def get_alert(self, alert_id: str) -> str:
         return self.alerts[alert_id]
+
+    @gl.public.view
+    def get_incident(self, incident_id: str) -> str:
+        return self.incidents[incident_id]

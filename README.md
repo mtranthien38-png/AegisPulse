@@ -1,46 +1,68 @@
 # AegisPulse
 
-**AI-powered anomaly detection and incident response for decentralized infrastructure.**
+**Detect anomalies before they become incidents — powered by GenLayer.**
 
-AegisPulse is a GenLayer-ready security operations project for monitoring validator fleets, protocol services, and critical infrastructure. It focuses on detecting abnormal behavior early, scoring incident severity, and coordinating response with a clean human review path.
+AegisPulse is an infrastructure monitoring dApp built on [GenLayer](https://genlayer.com). It registers monitored assets, scores alerts with on-chain AI consensus, and manages incident response — all as GenLayer Intelligent Contract transactions.
 
-## What it does
+## How it works
 
-- Watches nodes, validators, relays, and service endpoints for drift, downtime, and suspicious patterns.
-- Aggregates alerts into incidents with severity and confidence scoring.
-- Uses an intelligent contract to score incident likelihood, recommend next actions, and track response decisions.
-- Gives operators a dashboard for live health, alert history, and resolution workflow.
+1. **Register asset** — onboard a monitored infrastructure component (validator, relay, gateway, watchpoint) as an on-chain entry.
+2. **Score alert** — describe the anomaly evidence in plain English. The Intelligent Contract uses multi-validator AI consensus (`gl.eq_principle.prompt_comparative`) to score severity (0–100), confidence, and recommended action (`observe`, `escalate`, `isolate`, `page_oncall`).
+3. **Open incident** — escalate a high-risk alert into a tracked on-chain incident.
+4. **Resolve** — close the incident after remediation.
 
-## Suggested stack
+Every step is a GenLayer transaction — fully auditable on the blockchain.
 
-- Frontend: Next.js + TypeScript + Tailwind CSS
-- Backend: FastAPI + PostgreSQL + Redis
-- Intelligent contract: GenLayer Python contract
-- Monitoring: background workers and webhook ingestion
+## Architecture
 
-## Core modules
+```
+Browser ──genlayer-js──▸ GenLayer StudioNet
+  │                         │
+  ├─ register_asset ────────▸ AegisPulseContract
+  ├─ score_alert ───────────▸ (AI consensus)
+  ├─ open_incident ─────────▸ incident store
+  └─ resolve_incident ──────▸ status update
+```
 
-- `backend/` API, workers, persistence, auth
-- `frontend/` dashboard and incident workflow UI
-- `intelligent-contracts/` GenLayer logic for scoring and approval
-- `docs/` product and workflow notes
+No backend server. The React SPA talks directly to the GenLayer chain via `genlayer-js`.
 
-## First milestone
+## Intelligent Contract
 
-1. Register a monitored asset.
-2. Ingest an alert or heartbeat failure.
-3. Open an incident.
-4. Score it through the GenLayer contract.
-5. Track resolution and postmortem notes.
+**File:** `intelligent-contracts/aegis_pulse.py`
 
-## Running locally
+| Function | Type | Description |
+|----------|------|-------------|
+| `register_asset(asset_id, name, asset_type)` | write | Register a monitored asset |
+| `score_alert(alert_id, asset_id, severity_hint, evidence_summary)` | write | AI-consensus alert scoring |
+| `open_incident(incident_id, alert_id, title)` | write | Open an incident from a scored alert |
+| `resolve_incident(incident_id)` | write | Resolve an open incident |
+| `get_asset(asset_id)` | view | Read asset state |
+| `get_alert(alert_id)` | view | Read alert state |
+| `get_incident(incident_id)` | view | Read incident state |
 
-- Backend: `cd backend && uvicorn app.main:app --reload --port 8000`
-- Frontend: `cd frontend && npm install && npm run dev`
-- Contract: upload `intelligent-contracts/aegis_pulse.py` to GenLayer Studio
+## Tech stack
 
-## Deployed on-chain
+- **Contract:** Python (genlayer SDK), deployed on StudioNet
+- **Frontend:** React 19 + Vite + Tailwind CSS v4 + TypeScript
+- **Wallet:** MetaMask / OKX via `window.ethereum` (EIP-1193)
+- **Chain interaction:** `genlayer-js` (read via `readContract`, write via `writeContract`)
 
-- Network: `Bradbury Testnet`
-- Contract address: `0xc32725AAA0062754C9fA7B297821CF47bB2C37F9`
-- Deployment tx: `0x995fe577b527bc7d6f23573d7eed6b7eda1b47ca79fd2758466e8a9d6dec237d`
+## Getting started
+
+```bash
+cd frontend
+cp .env.example .env.local   # set VITE_CONTRACT_ADDRESS
+npm install
+npm run dev
+```
+
+Open http://localhost:5173 and connect your wallet (StudioNet, chain ID 61999).
+
+## Network
+
+| Field | Value |
+|-------|-------|
+| Network | GenLayer StudioNet |
+| Chain ID | 61999 (0xF22F) |
+| RPC | https://studio.genlayer.com/api |
+| Explorer | https://explorer-studio.genlayer.com |

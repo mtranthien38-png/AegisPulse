@@ -1,29 +1,38 @@
-export type Asset = {
-  id: string;
-  name: string;
-  asset_type: string;
-  network: string;
-  status: string;
-  uptime_30d: number;
-  risk_score: number;
-};
+export interface ContractAsset {
+  asset_id: string
+  name: string
+  asset_type: string
+  status: string
+}
 
-export type Alert = {
-  id: string;
-  title: string;
-  severity: "low" | "medium" | "high" | "critical";
-  confidence: number;
-  asset: string;
-  signal: string;
-  age_minutes: number;
-};
+export interface ContractAlert {
+  alert_id: string
+  asset_id: string
+  severity_score: number
+  confidence: number
+  recommended_action: string
+}
 
-export type Incident = {
-  id: string;
-  title: string;
-  status: string;
-  priority: string;
-  owner: string;
-  asset: string;
-  next_step: string;
-};
+export interface ContractIncident {
+  incident_id: string
+  alert_id: string
+  title: string
+  status: string
+}
+
+export interface LocalAsset extends ContractAsset {
+  network: string
+  registered_at: string
+}
+
+export interface LocalAlert extends ContractAlert {
+  severity_hint: string
+  evidence_summary: string
+  scored_at: string
+  tx_hash?: string
+}
+
+export interface LocalIncident extends ContractIncident {
+  opened_at: string
+  tx_hash?: string
+}
