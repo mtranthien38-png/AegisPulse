@@ -58,6 +58,10 @@ npm run dev
 
 Open http://localhost:5173 and connect your wallet (StudioNet, chain ID 61999).
 
+## Live
+
+https://aegispulse.vercel.app/
+
 ## Network
 
 | Field | Value |
