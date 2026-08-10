@@ -40,6 +40,15 @@ Dispute window ──▸ re-adjudicate with new evidence
 | `list_tickets_for(party)` | view | List tickets for address |
 | `list_all_ids()` | view | List all ticket IDs |
 
+## Additional Intelligent Contracts
+
+| Contract | Industry | Non-deterministic consensus outcome |
+|----------|----------|-------------------------------------|
+| `HarvestGuard` | Agriculture and food supply chains | Whether live inspection and traceability evidence meets a produce lot's quality criteria |
+| `CarbonProof` | Climate finance and carbon markets | Whether live registry and verification evidence proves the agreed carbon-credit delivery |
+
+See [Intelligent Contracts](docs/intelligent-contracts.md) for the flows, methods, and escrow safety properties.
+
 ## Tech stack
 
 - **Contract:** Python (genlayer SDK) with `gl.nondet.web.render()` evidence fetching
