@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useWallet } from '../lib/useWallet'
-import { getTicket, acknowledge, submitEvidence, adjudicate, raiseAlert, raiseDispute, settleRefund, refundExpired } from '../lib/aegispulse'
+import { getTicket, acknowledge, submitEvidence, adjudicate, raiseAlert, raiseDispute, settleViolation, settleRefund, refundExpired } from '../lib/aegispulse'
 import { EXPLORER_URL } from '../lib/genlayer'
 import type { Ticket } from '../lib/types'
 import { STATUS_LABELS, STATUS_COLORS } from '../lib/types'
@@ -107,12 +107,27 @@ export function TicketDetail() {
         </div>
       )}
 
-      {/* Evidence URLs */}
-      {ticket.evidence_urls.length > 0 && (
+      {/* Evidence URLs — Provider */}
+      {ticket.provider_evidence_urls.length > 0 && (
         <div className="border border-slate-800 rounded p-4 mb-4 bg-slate-900/30">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Evidence URLs</p>
+          <p className="text-[10px] text-emerald-400 uppercase tracking-wider mb-2">Provider Evidence URLs</p>
           <div className="space-y-1">
-            {ticket.evidence_urls.map((url, i) => (
+            {ticket.provider_evidence_urls.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                className="block text-xs text-cyan-400 hover:text-cyan-300 font-mono truncate">
+                {url}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Evidence URLs — Operator */}
+      {ticket.operator_evidence_urls.length > 0 && (
+        <div className="border border-slate-800 rounded p-4 mb-4 bg-slate-900/30">
+          <p className="text-[10px] text-cyan-400 uppercase tracking-wider mb-2">Operator Evidence URLs</p>
+          <div className="space-y-1">
+            {ticket.operator_evidence_urls.map((url, i) => (
               <a key={i} href={url} target="_blank" rel="noopener noreferrer"
                 className="block text-xs text-cyan-400 hover:text-cyan-300 font-mono truncate">
                 {url}
@@ -156,8 +171,8 @@ export function TicketDetail() {
             </button>
           )}
 
-          {/* Provider: submit evidence */}
-          {isProvider && (ticket.status === 'acknowledged' || ticket.status === 'open') && (
+          {/* Provider or Operator: submit evidence */}
+          {(isProvider || isOperator) && (ticket.status === 'acknowledged' || ticket.status === 'open') && (
             <div className="mb-4">
               <textarea value={evidenceUrls} onChange={e => setEvidenceUrls(e.target.value)} rows={2}
                 placeholder="Evidence URLs, one per line..."
@@ -203,6 +218,12 @@ export function TicketDetail() {
           )}
 
           {/* Settle / Refund */}
+          {ticket.status === 'violation_confirmed' && (
+            <button onClick={() => doAction(() => settleViolation(wallet.address!, ticket.id), 'Settle Violation')}
+              className="px-4 py-2 rounded text-xs bg-red-500/20 text-red-300 border border-red-400/30 hover:bg-red-500/30 transition">
+              Settle Violation (after appeal window)
+            </button>
+          )}
           {ticket.status === 'no_violation' && (
             <button onClick={() => doAction(() => settleRefund(wallet.address!, ticket.id), 'Settle Refund')}
               className="px-4 py-2 rounded text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 hover:bg-emerald-500/30 transition">

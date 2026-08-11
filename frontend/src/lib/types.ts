@@ -5,7 +5,8 @@ export interface Ticket {
   stake_amount: number
   sla_spec: string
   alert_summary: string
-  evidence_urls: string[]
+  provider_evidence_urls: string[]
+  operator_evidence_urls: string[]
   status: string
   verdict_reasoning: string
   created_at: number
@@ -13,6 +14,7 @@ export interface Ticket {
   dispute_round: number
   funds_moved: boolean
   rejected_at: number
+  verdict_decided_at: number
 }
 
 export const STATUS_LABELS: Record<string, string> = {

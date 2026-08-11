@@ -28,6 +28,14 @@ export async function listTicketsFor(party: string): Promise<number[]> {
   const raw = await read('list_tickets_for', [party])
   return (raw as unknown as number[]) ?? []
 }
+export async function getAppealDeadline(ticketId: number): Promise<number> {
+  const raw = await read('get_appeal_deadline', [ticketId])
+  return Number(raw)
+}
+export async function canSettle(ticketId: number): Promise<{ eligible: boolean; window_open: boolean; status: string }> {
+  const raw = await read('can_settle', [ticketId])
+  return raw as unknown as { eligible: boolean; window_open: boolean; status: string }
+}
 
 // ---- writes ----
 export async function createTicket(account: string, operator: string, slaSpec: string, deadline: number, genAmount: string) {
@@ -47,6 +55,9 @@ export async function adjudicate(account: string, ticketId: number) {
 }
 export async function raiseDispute(account: string, ticketId: number, additionalEvidence: string[], reason: string) {
   return write(account, 'raise_dispute', [ticketId, additionalEvidence, reason])
+}
+export async function settleViolation(account: string, ticketId: number) {
+  return write(account, 'settle_violation', [ticketId])
 }
 export async function settleRefund(account: string, ticketId: number) {
   return write(account, 'settle_refund', [ticketId])
