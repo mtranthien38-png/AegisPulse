@@ -73,6 +73,7 @@ class Ticket:
     funds_moved: bool
     rejected_at: u256
     verdict_decided_at: u256
+    verdict_valid: bool
 
 
 class AegisPulseContract(gl.Contract):
@@ -102,6 +103,13 @@ class AegisPulseContract(gl.Contract):
 
     def _pay(self, to: Address, amount: u256) -> None:
         gl.get_contract_at(to).emit_transfer(value=amount, on="finalized")
+
+    def _validate_evidence_url(self, url: str) -> None:
+        normalized = url.strip()
+        if not normalized.startswith("https://"):
+            raise gl.vm.UserError(f"{ERROR_EXPECTED} Evidence URLs must use https")
+        if len(normalized) > MAX_CHARS_PER_URL:
+            raise gl.vm.UserError(f"{ERROR_EXPECTED} Evidence URL exceeds {MAX_CHARS_PER_URL} characters")
 
     def _transition(self, t: Ticket, new_status: str) -> None:
         if not _valid_transition(t.status, new_status):
@@ -147,6 +155,7 @@ class AegisPulseContract(gl.Contract):
             status=Status.OPEN, verdict_reasoning="", created_at=now, deadline=deadline,
             dispute_round=u256(0), funds_moved=False, rejected_at=u256(0),
             verdict_decided_at=u256(0),
+            verdict_valid=False,
         )
         self.tickets[tid] = t
         self.all_ids.append(tid)
@@ -159,6 +168,8 @@ class AegisPulseContract(gl.Contract):
         t = self._get(u256(ticket_id))
         if gl.message.sender_address != t.operator:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Only operator may raise alert")
+        if t.status != Status.OPEN:
+            raise gl.vm.UserError(f"{ERROR_EXPECTED} Alerts can only be raised for open tickets")
         if not alert_summary.strip():
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Alert summary required")
         t.alert_summary = alert_summary.strip()
@@ -185,18 +196,21 @@ class AegisPulseContract(gl.Contract):
 
         if not is_provider and not is_operator:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Only provider or operator may submit evidence")
+        if t.status not in (Status.OPEN, Status.ACKNOWLEDGED, Status.EVIDENCE_SUBMITTED):
+            raise gl.vm.UserError(f"{ERROR_EXPECTED} Ticket is not accepting evidence in status '{t.status}'")
         if self._now() > t.deadline:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Deadline passed")
         if len(evidence_urls) == 0:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} At least one evidence URL required")
 
-        # Each party gets up to MAX_EVIDENCE_URLS
+        # Each party gets an independent, equal evidence budget.
         if is_provider:
             existing = len(t.provider_evidence_urls)
             remaining_capacity = MAX_EVIDENCE_URLS - existing
             if len(evidence_urls) > remaining_capacity:
                 raise gl.vm.UserError(f"{ERROR_EXPECTED} Too many URLs (max {MAX_EVIDENCE_URLS} per party, {remaining_capacity} slots left)")
             for url in evidence_urls:
+                self._validate_evidence_url(url)
                 t.provider_evidence_urls.append(url)
             t.alert_summary = f"{t.alert_summary}\n\n[Provider notes] {notes}".strip()
         else:
@@ -205,10 +219,11 @@ class AegisPulseContract(gl.Contract):
             if len(evidence_urls) > remaining_capacity:
                 raise gl.vm.UserError(f"{ERROR_EXPECTED} Too many URLs (max {MAX_EVIDENCE_URLS} per party, {remaining_capacity} slots left)")
             for url in evidence_urls:
+                self._validate_evidence_url(url)
                 t.operator_evidence_urls.append(url)
             t.alert_summary = f"{t.alert_summary}\n\n[Operator notes] {notes}".strip()
 
-        # Advance status only from OPEN or ACKNOWLEDGED
+        # Advance status only while the ticket is in an evidence phase.
         if t.status in (Status.OPEN, Status.ACKNOWLEDGED):
             t.status = Status.EVIDENCE_SUBMITTED
         self._save(t)
@@ -224,10 +239,6 @@ class AegisPulseContract(gl.Contract):
         all_urls = self._merge_evidence(t)
         if len(all_urls) == 0:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} No evidence URLs from either party")
-
-        # Track previous verdict for reversal detection
-        was_violation = t.status == Status.DISPUTED and t.verdict_reasoning and "violation" in t.verdict_reasoning.lower()
-        previous_status_before_dispute = t.status
 
         sla_spec = t.sla_spec
         alert_summary = t.alert_summary
@@ -268,25 +279,44 @@ Respond with strict JSON only:
             raw = gl.nondet.exec_prompt(prompt, response_format="json")
             return _parse_verdict(raw)
 
-        verdict = gl.eq_principle.prompt_comparative(
-            judge,
-            principle=(
-                "The `violation` boolean must be identical. "
-                "The reasoning must reach the same substantive conclusion about "
-                "whether the evidence proves an SLA breach."
-            ),
-        )
+        try:
+            verdict = gl.eq_principle.prompt_comparative(
+                judge,
+                principle=(
+                    "The `violation` boolean must be identical. "
+                    "The reasoning must reach the same substantive conclusion about "
+                    "whether the evidence proves an SLA breach."
+                ),
+            )
+        except Exception as e:
+            verdict = {"violation": False, "valid": False,
+                       "confidence": 0.0,
+                       "reasoning": f"[SAFE HOLD] Verdict unavailable: {str(e)[:200]}"}
+
+        # A malformed/unavailable verdict is never a refund verdict. Keep the
+        # stake locked and leave the ticket retryable in its current review phase.
+        if not verdict.get("valid", True):
+            t.verdict_valid = False
+            t.verdict_reasoning = verdict.get("reasoning", "[SAFE HOLD] Verdict unavailable")
+            t.verdict_decided_at = u256(0)
+            t.rejected_at = u256(0)
+            self._save(t)
+            return
 
         t.verdict_reasoning = verdict["reasoning"]
         t.verdict_decided_at = self._now()
+        t.verdict_valid = True
 
         if verdict["violation"]:
             # Violation confirmed — stake stays escrowed until appeal window
             self._transition(t, Status.VIOLATION_CONFIRMED)
         else:
             # No violation — stake stays escrowed until appeal window
-            t.rejected_at = self._now()
+            t.rejected_at = t.verdict_decided_at
             self._transition(t, Status.NO_VIOLATION)
+        if verdict["violation"]:
+            # A reversal from NO_VIOLATION starts a fresh appeal clock.
+            t.rejected_at = u256(0)
 
         self._save(t)
 
@@ -309,7 +339,15 @@ Respond with strict JSON only:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Appeal window closed — call settle instead")
 
         # Add dispute evidence to the appropriate party's evidence list
+        if len(additional_evidence) > 0:
+            remaining_capacity = MAX_EVIDENCE_URLS - (
+                len(t.provider_evidence_urls) if sender == t.provider
+                else len(t.operator_evidence_urls)
+            )
+            if len(additional_evidence) > remaining_capacity:
+                raise gl.vm.UserError(f"{ERROR_EXPECTED} Evidence budget exceeded; each party has {MAX_EVIDENCE_URLS} slots")
         for url in additional_evidence:
+            self._validate_evidence_url(url)
             if sender == t.provider and len(t.provider_evidence_urls) < MAX_EVIDENCE_URLS:
                 t.provider_evidence_urls.append(url)
             elif sender == t.operator and len(t.operator_evidence_urls) < MAX_EVIDENCE_URLS:
@@ -326,7 +364,7 @@ Respond with strict JSON only:
     def settle_violation(self, ticket_id: int) -> None:
         """Settle a confirmed violation — pay operator after appeal window closes."""
         t = self._get(u256(ticket_id))
-        if t.status != Status.VIOLATION_CONFIRMED:
+        if t.status != Status.VIOLATION_CONFIRMED or not t.verdict_valid:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Only VIOLATION_CONFIRMED tickets can be settled")
         if self._now() <= t.verdict_decided_at + self.appeal_window:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Appeal window still open")
@@ -340,7 +378,7 @@ Respond with strict JSON only:
     def settle_refund(self, ticket_id: int) -> None:
         """Settle a no-violation — refund provider after appeal window closes."""
         t = self._get(u256(ticket_id))
-        if t.status != Status.NO_VIOLATION:
+        if t.status != Status.NO_VIOLATION or not t.verdict_valid:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Only NO_VIOLATION tickets can be settled")
         if self._now() <= t.rejected_at + self.appeal_window:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Appeal window still open")
@@ -361,7 +399,7 @@ Respond with strict JSON only:
         if not t.funds_moved:
             self._pay(t.provider, t.stake_amount)
             t.funds_moved = True
-        t.status = Status.EXPIRED
+        self._transition(t, Status.EXPIRED)
         self._save(t)
 
     # ---- views ----
@@ -386,6 +424,7 @@ Respond with strict JSON only:
             "funds_moved": t.funds_moved,
             "rejected_at": int(t.rejected_at),
             "verdict_decided_at": int(t.verdict_decided_at),
+            "verdict_valid": t.verdict_valid,
         }
 
     @gl.public.view
@@ -405,7 +444,7 @@ Respond with strict JSON only:
         base = t.rejected_at if t.rejected_at > 0 else t.verdict_decided_at
         window_open = base > 0 and now <= base + self.appeal_window
         return {
-            "eligible": t.status in (Status.VIOLATION_CONFIRMED, Status.NO_VIOLATION) and not window_open,
+            "eligible": t.verdict_valid and t.status in (Status.VIOLATION_CONFIRMED, Status.NO_VIOLATION) and not window_open,
             "window_open": window_open,
             "status": t.status,
         }
@@ -434,19 +473,19 @@ def _parse_verdict(raw) -> dict:
         first = text.find("{")
         last = text.rfind("}")
         if first == -1 or last == -1:
-            # Safe fallback: malformed response → no violation (refund path)
-            return {"violation": False, "confidence": 0.0, "reasoning": f"[SAFE FALLBACK] No JSON in LLM response: {text[:200]}"}
+            # Safe hold: malformed response is not a refund verdict.
+            return {"violation": False, "valid": False, "confidence": 0.0, "reasoning": f"[SAFE HOLD] No JSON in LLM response: {text[:200]}"}
         text = text[first:last + 1]
         text = re.sub(r",(?!\s*?[\{\[\"'\w])", "", text)
         try:
             data = json.loads(text)
         except Exception as e:
-            # Safe fallback: parse failure → no violation (refund path)
-            return {"violation": False, "confidence": 0.0, "reasoning": f"[SAFE FALLBACK] JSON parse failed: {e}"}
+            # Safe hold: parse failure is not a refund verdict.
+            return {"violation": False, "valid": False, "confidence": 0.0, "reasoning": f"[SAFE HOLD] JSON parse failed: {e}"}
 
     if not isinstance(data, dict):
-        # Safe fallback: unexpected type → no violation (refund path)
-        return {"violation": False, "confidence": 0.0, "reasoning": f"[SAFE FALLBACK] Expected dict, got {type(data)}"}
+        # Safe hold: unexpected type is not a refund verdict.
+        return {"violation": False, "valid": False, "confidence": 0.0, "reasoning": f"[SAFE HOLD] Expected dict, got {type(data)}"}
 
     violation_raw = data.get("violation")
     if violation_raw is None:
@@ -455,8 +494,8 @@ def _parse_verdict(raw) -> dict:
                 violation_raw = data[alt]
                 break
     if violation_raw is None:
-        # Safe fallback: missing violation field → no violation
-        return {"violation": False, "confidence": 0.0, "reasoning": f"[SAFE FALLBACK] Missing violation field in: {str(data)[:200]}"}
+        # Safe hold: missing violation field is not a refund verdict.
+        return {"violation": False, "valid": False, "confidence": 0.0, "reasoning": f"[SAFE HOLD] Missing violation field in: {str(data)[:200]}"}
 
     if isinstance(violation_raw, str):
         violation = violation_raw.strip().lower() in ("true", "yes", "1")
@@ -467,4 +506,4 @@ def _parse_verdict(raw) -> dict:
     if not isinstance(reasoning, str):
         reasoning = str(reasoning)
 
-    return {"violation": violation, "confidence": data.get("confidence", None), "reasoning": reasoning[:2000]}
+    return {"violation": violation, "valid": True, "confidence": data.get("confidence", None), "reasoning": reasoning[:2000]}

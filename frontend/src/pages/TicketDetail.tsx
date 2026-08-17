@@ -140,7 +140,9 @@ export function TicketDetail() {
       {/* Verdict */}
       {ticket.verdict_reasoning && (
         <div className="border border-purple-400/20 rounded p-4 mb-4 bg-purple-400/5">
-          <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-2">AI Verdict</p>
+          <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-2">
+            {ticket.verdict_valid ? 'AI Verdict' : 'Review paused — retry adjudication'}
+          </p>
           <p className="text-sm text-purple-200 whitespace-pre-wrap">{ticket.verdict_reasoning}</p>
         </div>
       )}
@@ -191,10 +193,10 @@ export function TicketDetail() {
           )}
 
           {/* Anyone: adjudicate */}
-          {ticket.status === 'evidence_submitted' && (
+          {(ticket.status === 'evidence_submitted' || ticket.status === 'disputed') && (
             <button onClick={() => doAction(() => adjudicate(wallet.address!, ticket.id), 'Adjudicate')}
               className="px-4 py-2 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-400/30 hover:bg-purple-500/30 transition">
-              Request AI Adjudication
+              {ticket.status === 'disputed' ? 'Re-adjudicate Dispute' : 'Request AI Adjudication'}
             </button>
           )}
 

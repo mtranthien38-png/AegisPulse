@@ -15,6 +15,7 @@ export interface Ticket {
   funds_moved: boolean
   rejected_at: number
   verdict_decided_at: number
+  verdict_valid: boolean
 }
 
 export const STATUS_LABELS: Record<string, string> = {

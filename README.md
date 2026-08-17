@@ -34,11 +34,25 @@ Dispute window ──▸ re-adjudicate with new evidence
 | `submit_evidence(ticket_id, evidence_urls, notes)` | write | Provider submits evidence URLs |
 | `adjudicate(ticket_id)` | write | AI fetches evidence, adjudicates |
 | `raise_dispute(ticket_id, additional_evidence, reason)` | write | Either party disputes |
+| `settle_violation(ticket_id)` | write | Final payout after appeal window |
 | `settle_refund(ticket_id)` | write | Final refund after appeal window |
 | `refund_expired(ticket_id)` | write | Auto-refund past deadline |
 | `get_ticket(ticket_id)` | view | Read ticket state |
 | `list_tickets_for(party)` | view | List tickets for address |
 | `list_all_ids()` | view | List all ticket IDs |
+
+### Safety guarantees
+
+- `adjudicate()` accepts both `evidence_submitted` and `disputed` tickets, so a
+  disputed ticket can be re-adjudicated with both parties' evidence.
+- A malformed or unavailable validator verdict is recorded as a safe hold,
+  keeps the ticket retryable, and never authorizes a refund or payout.
+- Every mutation checks its allowed lifecycle status before changing state;
+  settlement also requires a valid verdict and a closed appeal window.
+- Provider and operator each have an independent ten-URL evidence budget.
+- Every fresh valid verdict resets `verdict_decided_at`; a reversal to a
+  violation clears the old refund timestamp, while a no-violation verdict sets
+  `rejected_at` to the same new decision time.
 
 ## Additional Intelligent Contracts
 
