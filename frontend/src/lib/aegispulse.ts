@@ -1,4 +1,4 @@
-import { getReadClient, createWriteClient, CONTRACT_ADDRESS } from './genlayer'
+import { getReadClient, createWriteClient, createLegacyWriteClient, CONTRACT_ADDRESS } from './genlayer'
 import { parseEther } from 'viem'
 import type { Ticket } from './types'
 
@@ -9,10 +9,18 @@ async function read(fn: string, args: any[] = []): Promise<any> {
 
 async function write(account: string, fn: string, args: any[], value?: bigint): Promise<string> {
   const client = createWriteClient(account)
-  return client.writeContract({
-    address: CONTRACT_ADDRESS as any, functionName: fn, args,
-    value: value ?? 0n,
-  }) as unknown as string
+  const request = { address: CONTRACT_ADDRESS as any, functionName: fn, args, value: value ?? 0n }
+  try {
+    return await client.writeContract(request) as unknown as string
+  } catch (error: any) {
+    const message = String(error?.message || error)
+    if (!/cannot sign raw Bradbury transactions/i.test(message)) throw error
+    // Wallets without eth_signTransaction use their normal approval flow.
+    // This remains compatible with MetaMask/OKX installations that expose
+    // only eth_sendTransaction.
+    const legacy = createLegacyWriteClient(account)
+    return await legacy.writeContract(request) as unknown as string
+  }
 }
 
 // ---- reads ----

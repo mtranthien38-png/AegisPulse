@@ -7,12 +7,20 @@ export const EXPLORER_URL = 'https://explorer-bradbury.genlayer.com'
 export const NETWORK_NAME = 'Bradbury Testnet'
 export const RPC_URL = 'https://rpc-bradbury.genlayer.com'
 
+export function getWalletProvider() {
+  const eth = (window as any).ethereum
+  if (!eth) return null
+  // Prefer MetaMask when several injected wallets are installed. Some
+  // wallets expose an incomplete eth_signTransaction implementation.
+  return eth.providers?.find((provider: any) => provider.isMetaMask) || eth
+}
+
 export function getReadClient() {
   return createClient({ chain: testnetBradbury, endpoint: RPC_URL })
 }
 
 export function createWriteClient(account: string) {
-  const provider = (window as any).ethereum
+  const provider = getWalletProvider()
   if (!provider) throw new Error('No wallet found')
 
   // Bradbury requires numeric JSON-RPC request ids. Some injected wallets
@@ -37,10 +45,15 @@ export function createWriteClient(account: string) {
         chainId: hex(tx.chainId),
         type: '0x0',
       }
-      const signed = await provider.request({
-        method: 'eth_signTransaction',
-        params: [request],
-      })
+      let signed: unknown
+      try {
+        signed = await provider.request({ method: 'eth_signTransaction', params: [request] })
+      } catch (error: any) {
+        if (/method not supported|unsupported method/i.test(String(error?.message || error))) {
+          throw new Error('This wallet cannot sign raw Bradbury transactions. Use MetaMask, or remove and re-add Bradbury in the current wallet with RPC https://rpc-bradbury.genlayer.com.')
+        }
+        throw error
+      }
       if (typeof signed !== 'string' || !signed.startsWith('0x')) {
         throw new Error('The connected wallet did not return a signed transaction. Use MetaMask or a wallet that supports eth_signTransaction on Bradbury.')
       }
@@ -56,8 +69,19 @@ export function createWriteClient(account: string) {
   })
 }
 
+export function createLegacyWriteClient(account: string) {
+  const provider = getWalletProvider()
+  if (!provider) throw new Error('No wallet found')
+  return createClient({
+    chain: testnetBradbury,
+    account: account as any,
+    provider,
+    endpoint: RPC_URL,
+  })
+}
+
 export async function switchToNetwork() {
-  const eth = (window as any).ethereum
+  const eth = getWalletProvider()
   if (!eth) throw new Error('No wallet found')
   try {
     await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID }] })
