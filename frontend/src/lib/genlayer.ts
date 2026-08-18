@@ -6,6 +6,9 @@ export const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string
 export const EXPLORER_URL = 'https://explorer-bradbury.genlayer.com'
 export const NETWORK_NAME = 'Bradbury Testnet'
 export const RPC_URL = 'https://rpc-bradbury.genlayer.com'
+// Wallets should use the underlying Bradbury chain RPC for standard eth_*
+// operations. The GenLayer RPC above remains the endpoint for gen_* calls.
+export const WALLET_RPC_URL = 'https://rpc.testnet-chain.genlayer.com'
 
 export function getWalletProvider() {
   const eth = (window as any).ethereum
@@ -93,7 +96,7 @@ export async function switchToNetwork() {
           chainId: CHAIN_ID,
           chainName: 'GenLayer Bradbury Testnet',
           nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
-          rpcUrls: [RPC_URL],
+          rpcUrls: [WALLET_RPC_URL],
           blockExplorerUrls: [EXPLORER_URL],
         }],
       })
