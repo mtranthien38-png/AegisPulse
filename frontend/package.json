@@ -10,12 +10,12 @@
     "test:contract-review": "node ../tests/aegis_pulse_review.test.mjs"
   },
   "dependencies": {
-    "genlayer-js": "^1.1.8",
+    "genlayer-js": "1.1.8",
     "lucide-react": "^0.540.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.18.0",
-    "viem": "^2.21.0"
+    "viem": "2.30.6"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

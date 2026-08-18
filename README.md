@@ -8,10 +8,12 @@ AegisPulse lets infrastructure providers stake GEN on SLA commitments. When a mo
 
 1. **Create ticket** — provider stakes GEN, sets SLA spec, deadline, and operator (monitoring party)
 2. **Raise alert** — operator detects SLA breach and raises an on-chain alert
-3. **Submit evidence** — provider submits URLs proving SLA compliance
+3. **Submit evidence** — provider and operator submit evidence URLs within their separate budgets
 4. **AI adjudication** — validators fetch evidence live via `gl.nondet.web.render()` and compare against SLA spec
 5. **Settlement** — violation → payout to operator / no violation → refund to provider
 6. **Dispute** — either party can dispute within a 3-day appeal window with additional evidence
+7. **Re-adjudicate** — disputed tickets are re-evaluated using both parties' evidence
+8. **Settle** — only a valid verdict after the appeal window can move escrow
 
 ## Architecture
 
@@ -31,7 +33,7 @@ Dispute window ──▸ re-adjudicate with new evidence
 | `create_ticket(operator, sla_spec, deadline)` | write.payable | Provider stakes GEN |
 | `raise_alert(ticket_id, alert_summary)` | write | Operator reports SLA breach |
 | `acknowledge(ticket_id)` | write | Provider acknowledges alert |
-| `submit_evidence(ticket_id, evidence_urls, notes)` | write | Provider submits evidence URLs |
+| `submit_evidence(ticket_id, evidence_urls, notes)` | write | Provider or operator submits evidence URLs |
 | `adjudicate(ticket_id)` | write | AI fetches evidence, adjudicates |
 | `raise_dispute(ticket_id, additional_evidence, reason)` | write | Either party disputes |
 | `settle_violation(ticket_id)` | write | Final payout after appeal window |
@@ -40,6 +42,17 @@ Dispute window ──▸ re-adjudicate with new evidence
 | `get_ticket(ticket_id)` | view | Read ticket state |
 | `list_tickets_for(party)` | view | List tickets for address |
 | `list_all_ids()` | view | List all ticket IDs |
+
+## Deployed contract
+
+The frontend and repository source are matched to this Bradbury deployment:
+
+- Contract: [`0xE22120B588Ab64eEE419b06Ba786355789e95fEb`](https://explorer-bradbury.genlayer.com/address/0xE22120B588Ab64eEE419b06Ba786355789e95fEb)
+- Deployment transaction: [`0x82267f48f8f9a434b724ccc0b92a5034d0c5e4ec046f42477290787f57f5f53c`](https://explorer-bradbury.genlayer.com/tx/0x82267f48f8f9a434b724ccc0b92a5034d0c5e4ec046f42477290787f57f5f53c)
+- Source file: [`intelligent-contracts/aegis_pulse.py`](intelligent-contracts/aegis_pulse.py)
+
+The deployment includes the `verdict_valid` field and the safe-hold behavior;
+the older address must not be used for this submission.
 
 ### Safety guarantees
 
@@ -67,6 +80,7 @@ See [Intelligent Contracts](docs/intelligent-contracts.md) for the flows, method
 
 - **Contract:** Python (genlayer SDK) with `gl.nondet.web.render()` evidence fetching
 - **Frontend:** React 19 + Vite + Tailwind CSS v4 + TypeScript
+- **RPC compatibility:** `viem@2.30.6` is pinned for Bradbury's integer JSON-RPC request IDs
 - **Wallet:** MetaMask / OKX via `window.ethereum`
 - **Chain:** GenLayer Bradbury Testnet (chain ID 4221)
 
@@ -79,6 +93,10 @@ npm install
 npm run dev
 ```
 
+The exact `viem` version is intentional. Do not replace it with a floating
+`^2.x` range: newer versions can serialize the Bradbury JSON-RPC request ID as
+a string and cause `eth_sendRawTransaction` batch parse errors.
+
 ## Live
 
 https://aegispulse.vercel.app/
@@ -89,6 +107,6 @@ https://aegispulse.vercel.app/
 |-------|-------|
 | Network | GenLayer Bradbury Testnet |
 | Chain ID | 4221 (0x107D) |
-| Contract | 0x1147af8C180f9F2B359E153A467a9E0EFAE07628 |
+| Contract | 0xE22120B588Ab64eEE419b06Ba786355789e95fEb |
 | RPC | https://rpc-bradbury.genlayer.com |
 | Explorer | https://explorer-bradbury.genlayer.com |

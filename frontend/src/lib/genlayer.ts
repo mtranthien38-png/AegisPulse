@@ -2,7 +2,7 @@ import { createClient } from 'genlayer-js'
 import { testnetBradbury } from 'genlayer-js/chains'
 
 export const CHAIN_ID = '0x107D'
-export const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || '0x1147af8C180f9F2B359E153A467a9E0EFAE07628'
+export const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || '0xE22120B588Ab64eEE419b06Ba786355789e95fEb'
 export const EXPLORER_URL = 'https://explorer-bradbury.genlayer.com'
 export const NETWORK_NAME = 'Bradbury Testnet'
 export const RPC_URL = 'https://rpc-bradbury.genlayer.com'
